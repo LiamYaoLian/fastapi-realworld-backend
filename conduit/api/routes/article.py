@@ -68,7 +68,7 @@ async def get_article(
     article_service: IArticleService,
 ) -> ArticleResponse:
     """
-    Get new article by slug.
+    Get article by slug.
     """
     article_dto = await article_service.get_article_by_slug(
         session=session, slug=slug, current_user=current_user
