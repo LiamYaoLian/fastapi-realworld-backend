@@ -1,0 +1,35 @@
+# Calls an HTTP endpoint when a pull request is opened.
+# Configure repository secrets: WEBHOOK_URL (and optionally WEBHOOK_SECRET).
+
+name: PR opened — notify endpoint
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          # Optional: shared secret your endpoint can verify (e.g. HMAC header)
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "WEBHOOK_URL secret is not set"
+            exit 1
+          fi
+          payload=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg pr "${{ github.event.pull_request.html_url }}" \
+            --arg title "${{ github.event.pull_request.title }}" \
+            --arg author "${{ github.event.pull_request.user.login }}" \
+            --arg base_sha "${{ github.event.pull_request.base.sha }}" \
+            --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+            '{event: "pull_request.opened", repository: $repo, pr_url: $pr, title: $title, author: $author, base_sha: $base_sha, head_sha: $head_sha}')
+          curl --fail-with-body -sS -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            ${WEBHOOK_SECRET:+-H "X-Webhook-Secret: $WEBHOOK_SECRET"} \
+            -d "$payload"
