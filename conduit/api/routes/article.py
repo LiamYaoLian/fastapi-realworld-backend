@@ -135,7 +135,7 @@ async def favorite_article(
     article_service: IArticleService,
 ) -> ArticleResponse:
     """
-    Favorite an article.
+    Mark an article favorite.
     """
     article_dto = await article_service.add_article_into_favorites(
         session=session, slug=slug, current_user=current_user
